@@ -59,6 +59,30 @@ static void MX_USART3_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+// Override _write() in syscalls.c, which is weakly linked.
+// By doing so, we redirect stdout to USART3.
+// On Nucleo-H743ZI2 boards, this is connected to the ST Link virtual COM port.
+//
+// "fd" is ignored by the function we're replacing, so we do too.
+int _write(int fd, uint8_t* source, int length)
+{
+	static uint8_t expandBuff[256]; // TODO: grow size if needed.
+	uint8_t* s = source;
+	uint8_t* d = expandBuff;
+
+	// convert \n to \r\n as needed, don't overrun expandBuff
+	while(length && ((d - expandBuff) < sizeof(expandBuff)-1) ) {
+		if (*s == '\n')
+			*d++ = '\r';
+		*d++ = *s++;
+		length--;
+	}
+	*d = '\0';
+
+	HAL_UART_Transmit(&huart3, expandBuff, (d - expandBuff), 100);
+	return length;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -92,6 +116,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+
+  puts("USB HID Evan's Human Interface Nugget, version 0.1");
 
   /* USER CODE END 2 */
 
