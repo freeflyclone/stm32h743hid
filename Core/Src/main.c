@@ -43,6 +43,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 UART_HandleTypeDef huart3;
+extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE BEGIN PV */
 
@@ -92,7 +93,18 @@ int _write(int fd, uint8_t* source, int length)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  // HID Mouse
+  struct mouseHID_t {
+	    uint8_t buttons;
+	      int8_t x;
+	      int8_t y;
+	      int8_t wheel;
+  };
+  struct mouseHID_t mouseHID;
+  mouseHID.buttons = 0;
+  mouseHID.x = 1;
+  mouseHID.y = 0;
+  mouseHID.wheel = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -128,6 +140,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	USBD_HID_SendReport(&hUsbDeviceFS, &mouseHID, sizeof(struct mouseHID_t));
+	HAL_Delay(1);
   }
   /* USER CODE END 3 */
 }
